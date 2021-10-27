@@ -444,6 +444,7 @@ def corr_heatmap(df, **cols_to_drop):
     """
     cols_drop = cols_to_drop.get('cols_drop', None)
     if isinstance(df, pd.DataFrame):
+        df = df.copy()
         df_cols = df.columns.tolist()
         if not cols_drop:
             fig, ax = plt.subplots()
