@@ -17,6 +17,7 @@ from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.impute import SimpleImputer
 from sklearn.compose import make_column_transformer
 from sklearn.pipeline import make_pipeline
+from sklearn.model_selection import GridSearchCV
 
 
 # import modules for machine learning models
@@ -129,48 +130,104 @@ def run_multi_models(df):
     # create dataframe of acc_scores dict
     df_scores = pd.DataFrame(acc_scores.items(), columns=['Regressor', 'R Squared'])
     max_score = df_scores.loc[df_scores['R Squared'] == df_scores['R Squared'].max()]
+    best_regressor = max_score['Regressor'].values.tolist()[0]
     print("####################################################################################")
     print("{} model yielded the highest R Squared of: {:.2f}".format(max_score['Regressor'].values.tolist()[0], max_score['R Squared'].values.tolist()[0]))
     # plot scores
-    return plots.bar_plot(df_scores, 'Regressor', 'R Squared')
+    return best_regressor, plots.bar_plot(df_scores, 'Regressor', 'R Squared')
 
-def regressor_hyperparameters(regressor):
+def regressor_hyperparameters(best_regressor):
     # regressor list
     regressor_list = ['SGDRegressor', 'Ridge', 'Lasso', 'ElasticNet', 'DecisionTreeRegressor', 'RandomForestRegressor']
     # param_dict
     params_dict = {
-        'SGDRegressor': {
+        'SGDRegressor': [
+            {'model': SGDRegressor()},
+            {'grid': {
             'sgdregressor__penalty': ['l2'],
             'sgdregressor__alpha': [0.0001, 0.001, 0.01, 1, 5, 10, 100, 1000],
             'sgdregressor__max_iter': [1000, 5000, 10000]
-        },
-        'Ridge': {
-            'ridge__alpha': [0.0001, 0.001, 0.01, 1, 5, 10, 100, 1000]
-        },
-        'Lasso': {
-            'lasso_aplha': [0.0001, 0.001, 0.01, 1, 5, 10, 100, 1000],
+        }}],
+        'Ridge': [
+            {'model': Ridge()},
+            {'grid': {'ridge__alpha': [0.0001, 0.001, 0.01, 1, 5, 10, 100, 1000]
+        }}],
+        'Lasso': [
+            {'model': Lasso()},
+            {'grid': {'lasso_aplha': [0.0001, 0.001, 0.01, 1, 5, 10, 100, 1000],
             'lasso__max_iter': [1000, 5000, 10000]
-        },
-        'ElasticNet': {
-            'elasticnet__alpha': [0.0001, 0.001, 0.01, 1, 5, 10, 100, 1000]
-        },
-        'DecisionTreeRegressor': {
-            'decisiontreeregressor__max_depth': [2, 4, 8, 10, 12, 16, 20],
+        }}],
+        'ElasticNet': [
+            {'model': ElasticNet()},
+            {'grid': {'elasticnet__alpha': [0.0001, 0.001, 0.01, 1, 5, 10, 100, 1000]
+        }}],
+        'DecisionTreeRegressor': [
+            {'model': DecisionTreeRegressor()},
+            { 'grid': {'decisiontreeregressor__max_depth': [2, 4, 8, 10, 12, 16, 20],
             'decisiontreeregressor__min_samples_leaf': [2, 4, 8, 10, 12, 16, 20]
-        },
-        'RandomForestregressor': {
-            'randomforestregressor__max_depth': [2, 4, 8, 10, 12, 16, 20],
+        }}],
+        'RandomForestregressor': [
+            {'model': RandomForestRegressor()},
+            {'grid' : {'randomforestregressor__max_depth': [2, 4, 8, 10, 12, 16, 20],
             'randomforestregressor__min_samples_leaf': [2, 4, 8, 10, 12, 16, 20]
-        }
+        }}]
     }
 
-    if regressor in regressor_list:
-        grid_params = params_dict[regressor]
+    if best_regressor in regressor_list:
+        grid_params = params_dict[best_regressor][0]['grid']
+        grid_model = params_dict[best_regressor][0]['model']
     else:
-        print("{} is not among list of regressors.".format(regressor))
+        print("{} is not among list of regressors.".format(best_regressor))
     
-    return grid_params
+    return grid_params, grid_model
 
-def best_regressor_hyperparameter(df, regressor):
+def best_regressor_hyperparameter(df, best_regressor):
+    print("Hyperparameter Tuning for the Best Regressor: {}".format(best_regressor))
+    # extract train and test data
+    X_train, X_test, y_train, y_test = pre_process_split_data(df)
+    # extract cat and num features
+    cat_feats, num_feats = extract_cat_num(X_train)
+    # instantiate preprocessor
+    preprocessor = preprocess_col_transformer(cat_feats, num_feats)
+    # extract best regressor model and grid params
+    grid_params, grid_model = regressor_hyperparameters(best_regressor)
+    # instantiate pipeline
+    print("Creating pipeline for {}.".format(best_regressor))
+    pipe = make_pipeline(preprocessor, grid_model)
+    # dictionary to hold gridsearch model output
+    GridSearchCV_model_output = {}
+    # create gridsearch object
+    grid_search = GridSearchCV(pipe, param_grid=grid_params, cv = 10, scoring = 'r2', refit = True, n_jobs = 4, return_train_score = True)
+    # fit gridsearch to training data
+    grid_search.fit(X_train, y_train)
+    # create key, value pair for best regressor
+    GridSearchCV_model_output['best_regressor_grid_object'] = grid_search.best_estimator_
+    # get best params
+    grid_best_params = grid_search.best_params_
+    print("Best parameters after GridSearchCV:\n {}".format(grid_best_params))
+    GridSearchCV_model_output['best_params'] = grid_best_params
+    # best score
+    grid_best_score = grid_search.best_score_
+    print("Best score after GridSearchCV:\n {}".format(grid_best_score))
+    # get feature names
+    cat_feature_names = grid_search.best_estimator_.named_steps['columntransformer'].named_transformers_['pipeline-1'].\
+        named_steps['onehotencoder'].get_feature_names(input_features = cat_feats)
+    all_feature_names = np.r_[cat_feature_names, num_feats]
+    # grab the coefficients
+    best_regressor_coef = list(grid_search.best_estimator_.named_steps[best_regressor.lower()].coef_)
+    best_regressor_coef_x = [x for x in best_regressor_coef]
+    # grab the intercept
+    grid_search_intercept = grid_search.best_estimator_.named_steps[best_regressor.lower()].intercept_
+    GridSearchCV_model_output['best_regressor_intercept'] = grid_search_intercept
+    # create a dataframe of feature names and coeeficients
+    coef_dict = dict(zip(all_feature_names, best_regressor_coef))
+    df_coef = pd.DataFrame(coef_dict.items(), columns = ['Feature', 'Coefficient'])
+    df_coef = df_coef.sort_values(by = ['Coefficient'], ascending = False)
+    df_coef = df_coef.reset_index(drop = True)
+    GridSearchCV_model_output['best_regressor_feature_importances'] = df_coef
+
+    return GridSearchCV_model_output, plots.bar_plot(df_coef, 'Feature', 'Coefficient')
+
+
 
         
