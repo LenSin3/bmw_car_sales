@@ -13,7 +13,7 @@ class InvalidDataStructure(Exception):
         self.object = object
     
     def __str__(self):
-        return "{} is not the expected object.".format(self.object)
+        return "unexpected object.".format(self.object)
 
 class InvalidColumn(Exception):
     def __init__(self, col: str) -> None:

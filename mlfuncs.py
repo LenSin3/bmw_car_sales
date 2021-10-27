@@ -21,7 +21,7 @@ from sklearn.pipeline import make_pipeline
 
 # import modules for machine learning models
 
-from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
+from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet, SGDRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 import xgboost as xgb
@@ -87,7 +87,8 @@ def run_multi_models(df):
     # instantiate preprocessor
     preprocessor = preprocess_col_transformer(cat_feats, num_feats)
     # instantiate regression models with base parameters
-    lin_reg = LinearRegression()
+    sgd_reg = SGDRegressor()
+    # lin_reg = LinearRegression()
     ri = Ridge(random_state=SEED)
     lo = Lasso(max_iter = 5000, random_state=SEED)
     en = ElasticNet(random_state=SEED)
@@ -96,12 +97,13 @@ def run_multi_models(df):
 
     # create tuple of regressors
     regressors = [
-        ('Linear Regression', lin_reg),
+        ('SGDRegressor', sgd_reg),
+        # ('LinearRegression', lin_reg),
         ('Ridge', ri),
         ('Lasso', lo),
         ('ElasticNet', en),
-        ('Decision Tree Regressor', dt_reg),
-        ('Random Forest Regressor', rf_reg)
+        ('DecisionTreeRegressor', dt_reg),
+        ('RandomForestRegressor', rf_reg)
     ]
 
     # dictionary to hold accuracy scores
@@ -133,7 +135,41 @@ def run_multi_models(df):
     return plots.bar_plot(df_scores, 'Regressor', 'R Squared')
 
 def regressor_hyperparameters(regressor):
+    # regressor list
+    regressor_list = ['SGDRegressor', 'Ridge', 'Lasso', 'ElasticNet', 'DecisionTreeRegressor', 'RandomForestRegressor']
+    # param_dict
+    params_dict = {
+        'SGDRegressor': {
+            'sgdregressor__penalty': ['l2'],
+            'sgdregressor__alpha': [0.0001, 0.001, 0.01, 1, 5, 10, 100, 1000],
+            'sgdregressor__max_iter': [1000, 5000, 10000]
+        },
+        'Ridge': {
+            'ridge__alpha': [0.0001, 0.001, 0.01, 1, 5, 10, 100, 1000]
+        },
+        'Lasso': {
+            'lasso_aplha': [0.0001, 0.001, 0.01, 1, 5, 10, 100, 1000],
+            'lasso__max_iter': [1000, 5000, 10000]
+        },
+        'ElasticNet': {
+            'elasticnet__alpha': [0.0001, 0.001, 0.01, 1, 5, 10, 100, 1000]
+        },
+        'DecisionTreeRegressor': {
+            'decisiontreeregressor__max_depth': [2, 4, 8, 10, 12, 16, 20],
+            'decisiontreeregressor__min_samples_leaf': [2, 4, 8, 10, 12, 16, 20]
+        },
+        'RandomForestregressor': {
+            'randomforestregressor__max_depth': [2, 4, 8, 10, 12, 16, 20],
+            'randomforestregressor__min_samples_leaf': [2, 4, 8, 10, 12, 16, 20]
+        }
+    }
+
+    if regressor in regressor_list:
+        grid_params = params_dict[regressor]
+    else:
+        print("{} is not among list of regressors.".format(regressor))
     
+    return grid_params
 
 def best_regressor_hyperparameter(df, regressor):
 
