@@ -129,13 +129,6 @@ def plot_unique_vals_count(df):
     plt.title('Count of Unique Values per Column')
     plt.show()
 
-    # plt.figure(figsize=(15, 8))
-    # plt.bar('column', 'count', data = unique_vals, color = 'orange', width = 0.7, align = 'center', edgecolor = 'blue')
-    # plt.xticks(rotation = 90)
-    # plt.xlabel("Column")
-    # plt.ylabel("Count")
-    # plt.title("Count of Unique Values in Column")
-    # plt.show()
 
 def plot_unique_vals_column(df, col, normalize = False):
     """Plot value counts in a column.
@@ -329,86 +322,14 @@ def hist_distribution(df, col, bins = 30, kde = False):
             raise utils.InvalidColumn(col)
     else:
         raise utils.InvalidDataFrame(df)
-
-def box_distribution(df, col, x =None, hue = None):
-    """Plot distribution of values in a column.
-
-    Box plot distribution of values in a column are plotted. If column to plot distribution is numerical, a single plot is generated.
-    If column is categorical, x value should be provided together with hue to plot distribution of categorical values varied by the hue.
-
-    Parameters
-    ----------
-    df : DataFrame
-        Dataframe containing column to check for unique values.
-    col : str
-        Name of column to plot.
-    x : str, optional
-        Column in DataFrame.
-        (Default value = None)
-    hue : str, optional
-        Column in DataFrame.
-        (Default value = None)
-
-    Returns
-    -------
-    seaborn.boxplot
-    """
-    if isinstance(df, pd.DataFrame):
-        df_cols = df.columns.tolist()
-        if col in df_cols and not x and not hue:
-            if df[col].dtypes == 'int64' or df[col].dtypes == 'int32' or df[col].dtypes == 'float64':
-                fig, ax = plt.subplots()
-                # the size of A4 paper lanscape
-                fig.set_size_inches(15, 8)
-                sns.set_context("poster", font_scale = .6, rc={"grid.linewidth": 0.6})
-                sns.boxplot(x = df[col])
-                plt.setp(ax.get_xticklabels(), rotation=0)
-                plt.title('Box Distribution of {}'.format(col.title()))
-                plt.savefig('images/{}_distribution.png'.format(col))
-                plt.show()
-            else:
-                raise utils.InvalidDataType(col)
-        elif (col in df_cols and df[col].dtype == 'object') and (x and hue):
-            if x in df_cols and hue in df_cols:
-                if (df[x].dtypes == 'int64' or df[x].dtypes == 'int32' or df[x].dtypes == 'float64') and (df[hue].dtypes == 'object'):
-                    fig, ax = plt.subplots()
-                    # the size of A4 paper lanscape
-                    fig.set_size_inches(8, 15)
-                    sns.boxplot(y= col, x = x,
-                                hue = hue, palette='vlag',
-                                data=df)
-                    sns.despine(offset=10, trim=True)
-                    # plt.setp(ax.get_xticklabels(), rotation=45)
-                    plt.title('Distribution of {} vs {}'.format(x.title(), col.title()))
-                    plt.savefig('images/{}_{}_bxplt.png'.format(x, col))
-                    plt.show()
-                elif (df[x].dtypes != 'int64' and df[x].dtypes != 'int32' and df[x].dtypes != 'float64'):
-                    raise utils.InvalidDataType(x)
-                elif df[hue].dtypes != 'object':
-                    raise utils.InvalidDataType(hue)
-                # else:
-                #     if df[x].dtypes != 'int64' or df[x].dtypes != 'int32' or df[x].dtypes != 'float64':
-                #         raise utils.InvalidDataType(x)
-                #     elif df[hue].dtypes != 'object':
-                #         raise utils.InvalidDataType(hue)
-            else:
-                if x not in df_cols:
-                    raise utils.InvalidColumn(x)
-                elif hue not in df_cols:
-                    raise utils.InvalidColumn(hue)
-        else:
-            if col not in df_cols:
-                raise utils.InvalidColumn(col)
-    else:
-        raise utils.InvalidDataFrame(df)
-
+    
 
 def box_plot(df, col, y = None):
     if isinstance(df, pd.DataFrame):
         df_cols = df.columns.tolist()
         if col in df_cols:
             if not y:
-                if df[col].dtypes == 'int64' or df[col].dtypes == 'float64':
+                if df[col].dtypes == 'int64' or df[col].dtypes == 'int32' or df[col].dtypes == 'float64':
                     fig, ax = plt.subplots()
                     # the size of A4 paper lanscape
                     fig.set_size_inches(15, 8)
@@ -509,4 +430,67 @@ def lineplot_by_unique_val(df, col, col_val, hue = None):
         raise utils.InvalidColumn(df)
 
 
-        
+def corr_heatmap(df, **cols_to_drop):
+    """Plot Correlation heatmap.
+
+    Parameters
+    ----------
+    df : DataFrame
+        DataFrame with numerical values to make Correlation Heatmap        
+
+    Returns
+    -------
+    seaborn.heatmap    
+    """
+    cols_drop = cols_to_drop.get('cols_drop', None)
+    if isinstance(df, pd.DataFrame):
+        df_cols = df.columns.tolist()
+        if not cols_drop:
+            fig, ax = plt.subplots()
+            fig.set_size_inches(15, 8)
+            mask = np.triu(np.ones_like(df.corr(), dtype = bool))
+            heatmap = sns.heatmap(df.corr(), mask = mask, vmin = -1, vmax = 1, annot  =True, cmap = 'GnBu')
+            heatmap.set_title("Correlation Heatmap of BMW Sales", fontdict = {'fontsize': 16}, pad = 15)
+            plt.setp(ax.get_xticklabels(), rotation = 90)
+            plt.setp(ax.get_yticklabels(), rotation = 0)
+            # plt.savefig("images/dfcorr.png")
+            plt.show()
+        if cols_drop:
+            if isinstance(cols_drop, list):
+                if len(cols_drop) == 1:
+                    if cols_drop[0] in df_cols:
+                        df.drop(cols_drop[0], inplace=True, axis=1)
+                        fig, ax = plt.subplots()
+                        fig.set_size_inches(15, 8)
+                        mask = np.triu(np.ones_like(df.corr(), dtype = bool))
+                        heatmap = sns.heatmap(df.corr(), mask = mask, vmin = -1, vmax = 1, annot  =True, cmap = 'Spectral')
+                        heatmap.set_title("Correlation Heatmap of BMW Sales", fontdict = {'fontsize': 16}, pad = 15)
+                        plt.setp(ax.get_xticklabels(), rotation = 90)
+                        plt.setp(ax.get_yticklabels(), rotation = 0)
+                        # plt.savefig("images/dfcorr.png")
+                        plt.show()
+                    else:
+                        raise utils.InvalidColumn(cols_drop[0])
+
+                elif len(cols_drop) > 1:
+                    col_mems = all(col in df_cols for col in cols_drop)
+                    if col_mems:
+                        df.drop(cols_drop, inplace=True, axis=1)
+                        fig, ax = plt.subplots()
+                        fig.set_size_inches(15, 8)
+                        mask = np.triu(np.ones_like(df.corr(), dtype = bool))
+                        heatmap = sns.heatmap(df.corr(), mask = mask, vmin = -1, vmax = 1, annot  =True, cmap = 'PuOr')
+                        heatmap.set_title("Correlation Heatmap of BMW Sales", fontdict = {'fontsize': 16}, pad = 15)
+                        plt.setp(ax.get_xticklabels(), rotation = 90)
+                        plt.setp(ax.get_yticklabels(), rotation = 0)
+                        # plt.savefig("images/dfcorr.png")
+                        plt.show()
+                    else:
+                        non_cols = []
+                        for col in cols_drop:
+                            if col not in df_cols:
+                                raise utils.InvalidColumn(col)
+            else:
+                raise utils.InvalidDataStructure(cols_drop)
+    else:
+        raise utils.InvalidDataFrame(df)

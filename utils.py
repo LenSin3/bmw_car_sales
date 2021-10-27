@@ -6,7 +6,14 @@ class InvalidDataFrame(Exception):
         self.df = df
     
     def __str__(self):
-        return "Object supplied is not a valid DataFrame"
+        return "Object supplied is not a valid DataFrame."
+
+class InvalidDataStructure(Exception):
+    def __init__(self, object): 
+        self.object = object
+    
+    def __str__(self):
+        return "{} is not the expected object.".format(self.object)
 
 class InvalidColumn(Exception):
     def __init__(self, col: str) -> None:
