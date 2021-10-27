@@ -134,7 +134,8 @@ def run_multi_models(df):
     print("####################################################################################")
     print("{} model yielded the highest R Squared of: {:.2f}".format(max_score['Regressor'].values.tolist()[0], max_score['R Squared'].values.tolist()[0]))
     # plot scores
-    return best_regressor, plots.bar_plot(df_scores, 'Regressor', 'R Squared')
+    plots.bar_plot(df_scores, 'Regressor', 'R Squared')
+    return best_regressor
 
 def regressor_hyperparameters(best_regressor):
     # regressor list
@@ -166,15 +167,15 @@ def regressor_hyperparameters(best_regressor):
             { 'grid': {'decisiontreeregressor__max_depth': [2, 4, 8, 10, 12, 16, 20],
             'decisiontreeregressor__min_samples_leaf': [2, 4, 8, 10, 12, 16, 20]
         }}],
-        'RandomForestregressor': [
+        'RandomForestRegressor': [
             {'model': RandomForestRegressor()},
-            {'grid' : {'randomforestregressor__max_depth': [2, 4, 8, 10, 12, 16, 20],
-            'randomforestregressor__min_samples_leaf': [2, 4, 8, 10, 12, 16, 20]
+            {'grid' : {'randomforestregressor__max_depth': [2, 4, 8, 10],
+            'randomforestregressor__min_samples_leaf': [2, 4, 8, 10]
         }}]
     }
 
     if best_regressor in regressor_list:
-        grid_params = params_dict[best_regressor][0]['grid']
+        grid_params = params_dict[best_regressor][1]['grid']
         grid_model = params_dict[best_regressor][0]['model']
     else:
         print("{} is not among list of regressors.".format(best_regressor))
@@ -220,7 +221,7 @@ def best_regressor_hyperparameter(df, best_regressor):
     grid_search_intercept = grid_search.best_estimator_.named_steps[best_regressor.lower()].intercept_
     GridSearchCV_model_output['best_regressor_intercept'] = grid_search_intercept
     # create a dataframe of feature names and coeeficients
-    coef_dict = dict(zip(all_feature_names, best_regressor_coef))
+    coef_dict = dict(zip(all_feature_names, best_regressor_coef_x))
     df_coef = pd.DataFrame(coef_dict.items(), columns = ['Feature', 'Coefficient'])
     df_coef = df_coef.sort_values(by = ['Coefficient'], ascending = False)
     df_coef = df_coef.reset_index(drop = True)
