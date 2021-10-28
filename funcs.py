@@ -147,6 +147,9 @@ def bmw_data_clean(df):
             raise utils.UnexpectedDataFrame(df)
     else:
         raise utils.InvalidDataFrame(df)
+
+    # save data
+    df.to_csv('data/bmw_clean.csv', index=False)
     
     return df
 

@@ -137,3 +137,7 @@ data
 # notebook
 test.ipynb
 test1.ipynb
+dl_test.ipynb
+
+# models
+models

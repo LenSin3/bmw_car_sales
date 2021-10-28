@@ -409,7 +409,7 @@ def lineplot_by_unique_val(df, col, col_val, hue = None):
                         sns.lineplot(x = 'year', y = 'price', data = df_col_val, hue = hue, ci = False)
                         plt.setp(ax.get_xticklabels(), rotation = 90)
                         plt.title('Time Series of Price of {} {} {}'.format(col_val.title(), col.title(), hue.title()))
-                        plt.savefig('images/{}_{}_tmseries.png')
+                        plt.savefig('images/{}_{}_tmseries.png'.format(col, col_val))
                         plt.show()
                     else:
                         raise utils.InvalidColumn(hue)

@@ -18,6 +18,8 @@ from sklearn.impute import SimpleImputer
 from sklearn.compose import make_column_transformer
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import GridSearchCV
+import sklearn.externals
+import joblib
 
 
 # import modules for machine learning models
@@ -143,34 +145,38 @@ def regressor_hyperparameters(best_regressor):
     # param_dict
     params_dict = {
         'SGDRegressor': [
-            {'model': SGDRegressor()},
+            {'model': SGDRegressor(random_state=SEED)},
             {'grid': {
             'sgdregressor__penalty': ['l2'],
             'sgdregressor__alpha': [0.0001, 0.001, 0.01, 1, 5, 10, 100, 1000],
             'sgdregressor__max_iter': [1000, 5000, 10000]
         }}],
         'Ridge': [
-            {'model': Ridge()},
+            {'model': Ridge(random_state=SEED)},
             {'grid': {'ridge__alpha': [0.0001, 0.001, 0.01, 1, 5, 10, 100, 1000]
         }}],
         'Lasso': [
-            {'model': Lasso()},
+            {'model': Lasso(random_state=SEED)},
             {'grid': {'lasso_aplha': [0.0001, 0.001, 0.01, 1, 5, 10, 100, 1000],
             'lasso__max_iter': [1000, 5000, 10000]
         }}],
         'ElasticNet': [
-            {'model': ElasticNet()},
+            {'model': ElasticNet(random_state=SEED)},
             {'grid': {'elasticnet__alpha': [0.0001, 0.001, 0.01, 1, 5, 10, 100, 1000]
         }}],
         'DecisionTreeRegressor': [
-            {'model': DecisionTreeRegressor()},
+            {'model': DecisionTreeRegressor(random_state=SEED)},
             { 'grid': {'decisiontreeregressor__max_depth': [2, 4, 8, 10, 12, 16, 20],
             'decisiontreeregressor__min_samples_leaf': [2, 4, 8, 10, 12, 16, 20]
         }}],
         'RandomForestRegressor': [
-            {'model': RandomForestRegressor()},
-            {'grid' : {'randomforestregressor__max_depth': [2, 4, 8, 10],
-            'randomforestregressor__min_samples_leaf': [2, 4, 8, 10]
+            {'model': RandomForestRegressor(random_state=SEED)},
+            {'grid' : {'randomforestregressor__max_depth': [2, 15, 22],
+            'randomforestregressor__min_samples_leaf': [1, 2, 4],
+            'randomforestregressor__min_samples_split': [2, 4, 6]
+            # 'randomforestregressor__min_weight_fraction_leaf': [0.1, 0.3, 0.9],
+            # 'randomforestregressor__max_features': ['auto', 'log2', 'sqrt', None]
+            # 'randomforestregressor__max_leaf_nodes': [None, 10, 40, 90]
         }}]
     }
 
@@ -214,20 +220,42 @@ def best_regressor_hyperparameter(df, best_regressor):
     cat_feature_names = grid_search.best_estimator_.named_steps['columntransformer'].named_transformers_['pipeline-1'].\
         named_steps['onehotencoder'].get_feature_names(input_features = cat_feats)
     all_feature_names = np.r_[cat_feature_names, num_feats]
-    # grab the coefficients
-    best_regressor_coef = list(grid_search.best_estimator_.named_steps[best_regressor.lower()].coef_)
-    best_regressor_coef_x = [x for x in best_regressor_coef]
-    # grab the intercept
-    grid_search_intercept = grid_search.best_estimator_.named_steps[best_regressor.lower()].intercept_
-    GridSearchCV_model_output['best_regressor_intercept'] = grid_search_intercept
+    # list to hold coefs or feature imporatnces in the case of decision trees and random forest
+    coefs_or_feats_imp = []
+
+    if not 'RandomForestRegressor' or not 'DecisionTreeRegressor':
+        # grab the coefficients
+        best_regressor_coef = list(grid_search.best_estimator_.named_steps[best_regressor.lower()].coef_)
+        best_regressor_coef_x = [x for x in best_regressor_coef]
+        coefs_or_feats_imp.append(best_regressor_coef_x)
+        # grab the intercept
+        grid_search_intercept = grid_search.best_estimator_.named_steps[best_regressor.lower()].intercept_
+        GridSearchCV_model_output['best_regressor_intercept'] = grid_search_intercept
+    else:
+        # grab the coefficients
+        best_regressor_coef = list(grid_search.best_estimator_.named_steps[best_regressor.lower()].feature_importances_)
+        best_regressor_coef_x = [x for x in best_regressor_coef]
+        coefs_or_feats_imp.append(best_regressor_coef_x)
+
     # create a dataframe of feature names and coeeficients
-    coef_dict = dict(zip(all_feature_names, best_regressor_coef_x))
+    coef_dict = dict(zip(all_feature_names, coefs_or_feats_imp[0]))
     df_coef = pd.DataFrame(coef_dict.items(), columns = ['Feature', 'Coefficient'])
     df_coef = df_coef.sort_values(by = ['Coefficient'], ascending = False)
     df_coef = df_coef.reset_index(drop = True)
     GridSearchCV_model_output['best_regressor_feature_importances'] = df_coef
 
     return GridSearchCV_model_output, plots.bar_plot(df_coef, 'Feature', 'Coefficient')
+
+def dump_estimator(GridSearchCV_model_output, best_regressor):
+    # regressor list
+    regressor_list = ['SGDRegressor', 'Ridge', 'Lasso', 'ElasticNet', 'DecisionTreeRegressor', 'RandomForestRegressor']
+    if best_regressor in regressor_list:
+        best_estimator = GridSearchCV_model_output['best_regressor_grid_object']
+        model = joblib.dump(best_estimator, 'models/best_regressor_dump.pkl')
+    else:
+        print("{} is not among list of regressors.".format(best_regressor))
+    return model
+
 
 
 
