@@ -235,7 +235,7 @@ def bar_plot(df, col_x, col_y):
                 #     bar.text(i, df[col_y][i] + 0.25, str(round(df[col_y][i], 2)),
                 #     fontdict= dict(color = 'blue', fontsize = 10, horizontalalignment = 'center'))
                 plt.setp(ax.get_xticklabels(), rotation=90)
-                plt.title('Rank of {} by {}'.format(col_x, col_y))
+                plt.title('Rank of {} by {}'.format(col_y, col_x))
                 plt.savefig('images/{}_{}.png'.format(col_x, col_y))
                 plt.show()
             else:
@@ -373,7 +373,7 @@ def line_plot(df, x, y, hue = None):
                         sns.set_context("poster", font_scale = .6, rc={"grid.linewidth": 0.6})
                         sns.lineplot(x = x, y = y, data = df, hue = hue, ci = False)
                         plt.setp(ax.get_xticklabels(), rotation = 90)
-                        plt.title('Time Series of Price of BMW used car')
+                        plt.title('Time Series of Price of BMW Used Car by {}'.format(hue.title()))
                         plt.savefig('images/tmseriesn.png')
                         plt.show()
                     else:
@@ -495,3 +495,14 @@ def corr_heatmap(df, **cols_to_drop):
                 raise utils.InvalidDataStructure(cols_drop)
     else:
         raise utils.InvalidDataFrame(df)
+
+def rank_feature(df, col, measure, n = None):
+    # group data by col and agg by measure
+    df_grp = df.groupby(col, as_index = False)[measure].mean()
+    sort_df = df_grp.sort_values(by = [measure], ascending = False)
+    if n:
+        if type(n) == int:
+            sort_df = sort_df.iloc[:n, :]
+        else:
+            raise utils.InvalidDataType(n)
+    return bar_plot(sort_df, measure, col)
