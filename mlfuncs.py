@@ -22,8 +22,6 @@ import sklearn.externals
 import joblib
 
 
-# import modules for machine learning models
-
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet, SGDRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
@@ -215,7 +213,7 @@ def best_regressor_hyperparameter(df, best_regressor):
     GridSearchCV_model_output['best_params'] = grid_best_params
     # best score
     grid_best_score = grid_search.best_score_
-    print("Best score after GridSearchCV:\n {}".format(grid_best_score))
+    print("Best score after GridSearchCV:\n {:.2f}".format(grid_best_score))
     # get feature names
     cat_feature_names = grid_search.best_estimator_.named_steps['columntransformer'].named_transformers_['pipeline-1'].\
         named_steps['onehotencoder'].get_feature_names(input_features = cat_feats)
@@ -246,14 +244,14 @@ def best_regressor_hyperparameter(df, best_regressor):
 
     return GridSearchCV_model_output, plots.bar_plot(df_coef, 'Feature', 'Coefficient')
 
-def dump_estimator(GridSearchCV_model_output, best_regressor):
-    # regressor list
-    regressor_list = ['SGDRegressor', 'Ridge', 'Lasso', 'ElasticNet', 'DecisionTreeRegressor', 'RandomForestRegressor']
-    if best_regressor in regressor_list:
-        best_estimator = GridSearchCV_model_output['best_regressor_grid_object']
-        model = joblib.dump(best_estimator, 'models/best_regressor_dump.pkl')
-    else:
-        print("{} is not among list of regressors.".format(best_regressor))
+def dump_estimator(GridSearchCV_model_output):
+    # convert tuple to list
+    grid_list = list(GridSearchCV_model_output)
+    # extract best estimator
+    best_estimator = grid_list[0]['best_regressor_grid_object']
+    # save as pickle
+    model = joblib.dump(best_estimator, 'models/best_regressor_dump.pkl')
+    
     return model
 
 
