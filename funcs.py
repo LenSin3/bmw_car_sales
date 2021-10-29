@@ -148,6 +148,8 @@ def bmw_data_clean(df):
     else:
         raise utils.InvalidDataFrame(df)
 
+    # convert year to datatime    
+    df['year'] = pd.to_datetime(df['year'], format = '%Y')
     # save data
     df.to_csv('data/bmw_clean.csv', index=False)
     
