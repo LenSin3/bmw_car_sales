@@ -30,3 +30,27 @@ The data used in this project is obtained from [Datacamp's Career Hub repository
 
 ![Time Series of BMW Used car price](https://github.com/LenSin3/bmw_car_sales/blob/main/images/tmseriesn.png?raw=true)
 
+Initially, we can see prices plummet from around 1996 to 2000. The gradual increase is obeserved from 2000 to 2005 when they slightly dropped again and plateaued until 2006. This trend changed right after with a yearly increase on to 2020.
+
+We would also like to see how the models rank over the years. We will rank models with respect to Median Price as seen below.
+
+![Model Rank by Mean Price](https://github.com/LenSin3/bmw_car_sales/blob/main/images/price_model.png?raw=true)
+
+**X7** is the most expensive car when comparing average price over the years.
+
+The histogram below shows a right skew wherein bulk of the data lie on the left.
+
+![Histogram of Price](https://github.com/LenSin3/bmw_car_sales/blob/main/images/price_distribution.png?raw=true)
+
+## Supervised Machine Learning - Regression
+
+The following approach is employed to accomplish this:
+
+- Data Preprocessing
+- Develop and train multiple Regression models
+- Perform hyperparameter tuning for the best model
+- Extract feature importances
+
+Six regression models were trained including **SGDRegressor**, **Ridge**, **Lasso**, **ElasticNet**, **DecisionTreeRegressor** and **RandomForestRegressor**.
+
+![R Squared Ranking of Regressors](https://github.com/LenSin3/bmw_car_sales/blob/main/images/Regressor_R_Squared.png?raw=true)
