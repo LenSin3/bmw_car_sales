@@ -32,19 +32,19 @@ The data used in this project is obtained from [Datacamp's Career Hub repository
 
 ## Example plots from Exploratory Data Analysis
 
-![Time Series of BMW Used car price](https://github.com/LenSin3/bmw_car_sales/blob/main/images/tmseriesn.png?raw=true)
+![Time Series of BMW Used car price](https://github.com/LenSin3/bmw_car_sales/blob/main/images/tmseriesn1.png?raw=true)
 
 Initially, we can see prices plummet from around 1996 to 2000. The gradual increase is obeserved from 2000 to 2005 when they slightly dropped again and plateaued until 2006. This trend changed right after with a yearly increase on to 2020.
 
 We would also like to see how the models rank over the years. We will rank models with respect to Median Price as seen below.
 
-![Model Rank by Mean Price](https://github.com/LenSin3/bmw_car_sales/blob/main/images/price_model.png?raw=true)
+![Model Rank by Mean Price](https://github.com/LenSin3/bmw_car_sales/blob/main/images/price_model1.png?raw=true)
 
 **X7** is the most expensive car when comparing average price over the years.
 
 The histogram below shows a right skew wherein bulk of the data lie on the left.
 
-![Histogram of Price](https://github.com/LenSin3/bmw_car_sales/blob/main/images/price_distribution.png?raw=true)
+![Histogram of Price](https://github.com/LenSin3/bmw_car_sales/blob/main/images/price_distribution1.png?raw=true)
 
 ## Supervised Machine Learning - Regression
 
@@ -57,13 +57,13 @@ The following approach is employed to accomplish this:
 
 Six regression models were trained including **SGDRegressor**, **Ridge**, **Lasso**, **ElasticNet**, **DecisionTreeRegressor** and **RandomForestRegressor**.
 
-![R Squared Ranking of Regressors](https://github.com/LenSin3/bmw_car_sales/blob/main/images/Regressor_R_Squared.png?raw=true)
+![R Squared Ranking of Regressors](https://github.com/LenSin3/bmw_car_sales/blob/main/images/Regressor_R_Squared1.png?raw=true)
 
 The best regressor from the above plot is **RandomForestRegressor** with an approximate accuracy (R Squared) of 0.95, signifying our model is able to account for 95% of the variations in the data. Pretty good, huh!
 
 ## Feature Importances
 
-![Feature Importances](https://github.com/LenSin3/bmw_car_sales/blob/main/images/Feature_Coefficient.png?raw=true)
+![Feature Importances](https://github.com/LenSin3/bmw_car_sales/blob/main/images/Feature_Coefficient1.png?raw=true)
 
 We were able to extract the feature importances after the model was fit to the training data as seen in the chart above. The output aligns with our assumption that age of the car, engine size and gas consumption will be among the top ranked features to influence the price of a used bmw car.
 
